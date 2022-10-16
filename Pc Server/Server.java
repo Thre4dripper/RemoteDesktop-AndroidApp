@@ -1,8 +1,11 @@
 import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -45,6 +48,7 @@ public class Server {
                             dataOutputStream.write(byteArrayOutputStream.toByteArray());
                             dataOutputStream.flush();
 
+                            Thread.sleep(1);
                         } catch (Exception e) {
                             disconnectClient(socket);
                             break;
