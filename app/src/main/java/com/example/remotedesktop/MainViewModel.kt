@@ -7,5 +7,7 @@ import java.net.Socket
 class MainViewModel : ViewModel() {
     var ip = ""
     var socket: Socket? = null
-    var DataInputStream: DataInputStream? = null
+    var dataInputStream: DataInputStream? = null
+    var size = 0
+    var bytes: ByteArray? = null
 }

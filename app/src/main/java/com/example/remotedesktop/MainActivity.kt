@@ -13,6 +13,9 @@ import java.net.Socket
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var viewModel: MainViewModel
+
+    private lateinit var socketThread: Thread
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
@@ -27,18 +30,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun connectToServer() {
-        Thread {
+        socketThread = Thread {
             try {
                 viewModel.socket = Socket("192.168.0.110", 8080)
                 runOnUiThread {
                     Toast.makeText(this, "Connected", Toast.LENGTH_SHORT).show()
                 }
-                viewModel.DataInputStream = DataInputStream(viewModel.socket?.getInputStream())
+                viewModel.dataInputStream = DataInputStream(viewModel.socket?.getInputStream())
                 while (true) {
-                    val size = viewModel.DataInputStream?.readInt()
-                    val bytes = ByteArray(size!!)
-                    viewModel.DataInputStream?.readFully(bytes)
-                    val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    viewModel.size = viewModel.dataInputStream?.readInt()!!
+                    viewModel.bytes = ByteArray(viewModel.size)
+                    viewModel.dataInputStream?.readFully(viewModel.bytes)
+                    val bitmap =
+                        BitmapFactory.decodeByteArray(viewModel.bytes, 0, viewModel.bytes!!.size)
                     runOnUiThread {
                         binding.imageView.setImageBitmap(bitmap)
                     }
@@ -46,6 +50,18 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }.start()
+        }
+        socketThread.start()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        socketThread.join()
+        viewModel.socket?.close()
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        connectToServer()
     }
 }
