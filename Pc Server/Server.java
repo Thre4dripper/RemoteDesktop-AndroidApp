@@ -1,8 +1,8 @@
 import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -19,8 +19,11 @@ public class Server {
 
     public void startServer() {
         try {
+            Image cursor = ImageIO.read(Objects.requireNonNull(getClass().getResource("cursor.png")));
+
             while (!serverSocket.isClosed()) {
                 Socket socket = serverSocket.accept();
+                socket.setTcpNoDelay(true);
                 System.out.println("Client connected");
                 new Thread(() -> {
                     while (socket.isConnected()) {
@@ -29,11 +32,19 @@ public class Server {
                             Robot robot = new Robot();
                             //send screen image
                             BufferedImage image = robot.createScreenCapture(new Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
+
+                            Graphics2D graphics2D = image.createGraphics();
+                            int mouseX = MouseInfo.getPointerInfo().getLocation().x;
+                            int mouseY = MouseInfo.getPointerInfo().getLocation().y;
+                            graphics2D.drawImage(cursor, mouseX, mouseY, null);
+                            graphics2D.dispose();
+
                             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                            ImageIO.write(image, "jpg", byteArrayOutputStream);
+                            ImageIO.write(image, "png", byteArrayOutputStream);
                             dataOutputStream.writeInt(byteArrayOutputStream.size());
                             dataOutputStream.write(byteArrayOutputStream.toByteArray());
                             dataOutputStream.flush();
+
                         } catch (Exception e) {
                             disconnectClient(socket);
                             break;
