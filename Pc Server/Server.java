@@ -1,8 +1,14 @@
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -48,8 +54,11 @@ public class Server {
                             //convert image to byte array
                             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
+                            //compressing image
+                            image = compress(image, 0.1f);
+
                             //write image to byte array
-                            ImageIO.write(image, "png", byteArrayOutputStream);
+                            ImageIO.write(image, "jpg", byteArrayOutputStream);
 
                             //send image size to client
                             dataOutputStream.writeInt(byteArrayOutputStream.size());
@@ -71,6 +80,36 @@ public class Server {
         }
     }
 
+    /**
+     * Method for compressing image
+     *
+     * @param image image to compress
+     * @param comp  quality of compression
+     * @return compressed image
+     * @throws IOException if image is not found
+     */
+    public static BufferedImage compress(BufferedImage image, float comp) throws IOException {
+        ImageWriter jpgWriter = ImageIO.getImageWritersByFormatName("jpg").next();
+        ImageWriteParam jpgWriteParam = jpgWriter.getDefaultWriteParam();
+        jpgWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        jpgWriteParam.setCompressionQuality(comp);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ImageOutputStream stream = ImageIO.createImageOutputStream(outputStream);
+        jpgWriter.setOutput(stream);
+        jpgWriter.write(null, new IIOImage(image, null, null), jpgWriteParam);
+
+        byte[] bytes = outputStream.toByteArray();
+        stream.close();
+
+        return ImageIO.read(new ByteArrayInputStream(bytes));
+    }
+
+    /**
+     * Method for disconnect client
+     *
+     * @param socket socket of client
+     */
     public static void disconnectClient(Socket socket) {
         System.out.println("Client disconnected");
         try {
